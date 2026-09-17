@@ -1,5 +1,4 @@
 import io
-import os
 from reportlab.lib.pagesizes import A4
 from reportlab.platypus import (BaseDocTemplate, PageTemplate, Frame, FrameBreak, 
                                 NextPageTemplate, KeepInFrame, Paragraph, Spacer, 
@@ -28,25 +27,6 @@ def line(spaceBefore=4, spaceAfter=8, color="#2C3E50", thickness=1.0):
         spaceBefore=spaceBefore,
         spaceAfter=spaceAfter
     )
-
-def icon_text_row(icon_path, text, style, icon_size=12, padding=5):
-    if os.path.exists(icon_path):
-        try:
-            img = Image(icon_path, width=icon_size, height=icon_size)
-            table = Table(
-                [[img, Paragraph(text, style)]],
-                colWidths=[icon_size + padding, None],
-                style=TableStyle([
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('LEFTPADDING', (0, 0), (-1, -1), 0),
-                    ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-                ])
-            )
-            return table
-        except Exception:
-            pass
-    return Paragraph(text, style)
 
 def parse_text_to_flowables(text, style_normal, bullet_style):
     if not text:
@@ -184,21 +164,20 @@ def create_cv(data):
     
     val_phone = data.get("telephone")
     if val_phone and val_phone.strip():
-        contact_flowables.append(icon_text_row("icons/telefon.png", f"<b>{t_phone}</b> {format_smart_link(val_phone, 'text')}", style_contact))
+        contact_flowables.append(Paragraph(f"<b>{t_phone}</b> {format_smart_link(val_phone, 'text')}", style_contact))
 
     val_address = data.get("address")
     if val_address and val_address.strip():
-        contact_flowables.append(icon_text_row("icons/konum.png", f"<b>{t_loc}</b> {format_smart_link(val_address, 'text')}", style_contact))
+        contact_flowables.append(Paragraph(f"<b>{t_loc}</b> {format_smart_link(val_address, 'text')}", style_contact))
 
     val_email = data.get("email")
     if val_email and val_email.strip():
-        contact_flowables.append(icon_text_row("icons/eposta.png", f"<b>{t_email}</b> {format_smart_link(val_email, 'email')}", style_contact))
+        contact_flowables.append(Paragraph(f"<b>{t_email}</b> {format_smart_link(val_email, 'email')}", style_contact))
 
     if data.get("socials"):
         for platform, link in data["socials"]:
             if platform and link:
-                icon_path = f"icons/{platform.lower().replace(' ', '')}.png"
-                contact_flowables.append(icon_text_row(icon_path, f"<b>{platform.capitalize()}:</b> {format_smart_link(link, 'url')}", style_contact))
+                contact_flowables.append(Paragraph(f"<b>{platform.capitalize()}:</b> {format_smart_link(link, 'url')}", style_contact))
                 
     if contact_flowables:
         left_col_items.extend(create_block(data.get("h_contact", "İLETİŞİM"), contact_flowables, theme_color, style_bold))
