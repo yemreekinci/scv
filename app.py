@@ -145,8 +145,20 @@ def to_upper_lang(text, lang_code):
 
 # --- DİL SEÇİMİ ---
 col_space, col_lang = st.columns([5, 1])
+
+# Kullanıcı dili değiştirdiğinde eski PDF'i hafızadan silen fonksiyon
+def clear_pdf_cache():
+    if 'pdf_bytes' in st.session_state:
+        del st.session_state['pdf_bytes']
+
 with col_lang:
-    selected_lang = st.radio("🌐 Language / Dil", ["TR", "EN"], horizontal=True, key="lang_selector")
+    selected_lang = st.radio(
+        "🌐 Language / Dil", 
+        ["TR", "EN"], 
+        horizontal=True, 
+        key="lang_selector",
+        on_change=clear_pdf_cache # Dil değiştiğinde bu fonksiyon çalışır
+    )
 
 # Seçilen dile göre metinleri `t` değişkenine ata
 t = translations[selected_lang]
