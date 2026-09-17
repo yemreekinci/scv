@@ -10,14 +10,12 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.platypus import HRFlowable
 
-# Font Tanımlamaları ve Cloud Optimizasyonu (Hata Yakalama)
 try:
     pdfmetrics.registerFont(TTFont("Montserrat", "fonts/Montserrat-Regular.ttf"))
     pdfmetrics.registerFont(TTFont("Montserrat-Bold", "fonts/Montserrat-Bold.ttf"))
     FONT_NORMAL = "Montserrat"
     FONT_BOLD = "Montserrat-Bold"
 except Exception:
-    # Eğer fonts klasörü buluta yüklenmezse uygulama çökmesin diye standart fonta döner.
     FONT_NORMAL = "Helvetica"
     FONT_BOLD = "Helvetica-Bold"
 
@@ -100,7 +98,6 @@ def format_smart_link(text, link_type):
 def create_cv(data):
     buffer = io.BytesIO()
     
-    # SAYFA VE FRAME (ÇERÇEVE) MİMARİSİ
     PAGE_WIDTH, PAGE_HEIGHT = A4
     MARGIN = 30
     HEADER_HEIGHT = 150
@@ -143,7 +140,6 @@ def create_cv(data):
     page_2_template = PageTemplate(id='Page2', frames=[frame_right_2], onPage=draw_background)
     doc.addPageTemplates([page_1_template, page_2_template])
 
-    # STİLLER (Font Değişkenlerine Bağlandı)
     styles = getSampleStyleSheet()
     
     style_normal = ParagraphStyle('NormalStyle', parent=styles['Normal'], fontName=FONT_NORMAL, fontSize=10, leading=14, spaceAfter=5)
@@ -154,7 +150,6 @@ def create_cv(data):
     style_header_name = ParagraphStyle('HeaderName', parent=styles['Normal'], fontName=FONT_BOLD, fontSize=32, leading=34, spaceAfter=6, textColor=colors.HexColor(theme_color))
     style_header_title = ParagraphStyle('HeaderTitle', parent=styles['Normal'], fontName=FONT_NORMAL, fontSize=16, leading=18, textColor=colors.HexColor("#777777"), textTransform='uppercase', spaceAfter=10)
 
-    # İÇERİK OLUŞTURMA
     story = []
 
     # 1. BAŞLIK (HEADER)
@@ -182,17 +177,22 @@ def create_cv(data):
     left_col_items = []
     contact_flowables = []
     
+    # Çevirileri app.py'den çekiyoruz
+    t_phone = data.get("t_phone", "Telefon:")
+    t_loc = data.get("t_loc", "Konum:")
+    t_email = data.get("t_email", "E-posta:")
+    
     val_phone = data.get("telephone")
     if val_phone and val_phone.strip():
-        contact_flowables.append(icon_text_row("icons/telefon.png", f"<b>Telefon:</b> {format_smart_link(val_phone, 'text')}", style_contact))
+        contact_flowables.append(icon_text_row("icons/telefon.png", f"<b>{t_phone}</b> {format_smart_link(val_phone, 'text')}", style_contact))
 
     val_address = data.get("address")
     if val_address and val_address.strip():
-        contact_flowables.append(icon_text_row("icons/konum.png", f"<b>Konum:</b> {format_smart_link(val_address, 'text')}", style_contact))
+        contact_flowables.append(icon_text_row("icons/konum.png", f"<b>{t_loc}</b> {format_smart_link(val_address, 'text')}", style_contact))
 
     val_email = data.get("email")
     if val_email and val_email.strip():
-        contact_flowables.append(icon_text_row("icons/eposta.png", f"<b>E-posta:</b> {format_smart_link(val_email, 'email')}", style_contact))
+        contact_flowables.append(icon_text_row("icons/eposta.png", f"<b>{t_email}</b> {format_smart_link(val_email, 'email')}", style_contact))
 
     if data.get("socials"):
         for platform, link in data["socials"]:
@@ -201,14 +201,14 @@ def create_cv(data):
                 contact_flowables.append(icon_text_row(icon_path, f"<b>{platform.capitalize()}:</b> {format_smart_link(link, 'url')}", style_contact))
                 
     if contact_flowables:
-        left_col_items.extend(create_block("İLETİŞİM", contact_flowables, theme_color, style_bold))
+        left_col_items.extend(create_block(data.get("h_contact", "İLETİŞİM"), contact_flowables, theme_color, style_bold))
 
     if data.get("skills") and data["skills"].strip():
-        left_col_items.extend(create_block("YETENEKLER", parse_text_to_flowables(data["skills"], style_normal, style_bullet), theme_color, style_bold))
+        left_col_items.extend(create_block(data.get("h_skills", "YETENEKLER"), parse_text_to_flowables(data["skills"], style_normal, style_bullet), theme_color, style_bold))
     if data.get("languages") and data["languages"].strip():
-        left_col_items.extend(create_block("DİLLER", parse_text_to_flowables(data["languages"], style_normal, style_bullet), theme_color, style_bold))
+        left_col_items.extend(create_block(data.get("h_lang", "DİLLER"), parse_text_to_flowables(data["languages"], style_normal, style_bullet), theme_color, style_bold))
     if data.get("references") and data["references"].strip():
-        left_col_items.extend(create_block("REFERANSLAR", parse_text_to_flowables(data["references"], style_normal, style_bullet), theme_color, style_bold))
+        left_col_items.extend(create_block(data.get("h_ref", "REFERANSLAR"), parse_text_to_flowables(data["references"], style_normal, style_bullet), theme_color, style_bold))
 
     if left_col_items:
         story.append(KeepInFrame(LEFT_COL_WIDTH, PAGE_HEIGHT - 2*MARGIN - HEADER_HEIGHT, left_col_items, mode='shrink'))
@@ -220,11 +220,11 @@ def create_cv(data):
     
     right_col_items = []
     if data.get("about") and data["about"].strip():
-        right_col_items.extend(create_block("HAKKIMDA", parse_text_to_flowables(data["about"], style_normal, style_bullet), theme_color, style_bold))
+        right_col_items.extend(create_block(data.get("h_about", "HAKKIMDA"), parse_text_to_flowables(data["about"], style_normal, style_bullet), theme_color, style_bold))
     if data.get("experience") and data["experience"].strip():
-        right_col_items.extend(create_block("DENEYİM", parse_text_to_flowables(data["experience"], style_normal, style_bullet), theme_color, style_bold))
+        right_col_items.extend(create_block(data.get("h_exp", "DENEYİM"), parse_text_to_flowables(data["experience"], style_normal, style_bullet), theme_color, style_bold))
     if data.get("education") and data["education"].strip():
-        right_col_items.extend(create_block("EĞİTİM", parse_text_to_flowables(data["education"], style_normal, style_bullet), theme_color, style_bold))
+        right_col_items.extend(create_block(data.get("h_edu", "EĞİTİM"), parse_text_to_flowables(data["education"], style_normal, style_bullet), theme_color, style_bold))
     if data.get("custom_1_text") and data["custom_1_text"].strip():
         right_col_items.extend(create_block(data.get("custom_1_title", "ÖZEL ALAN 1"), parse_text_to_flowables(data["custom_1_text"], style_normal, style_bullet), theme_color, style_bold))
     if data.get("custom_2_text") and data["custom_2_text"].strip():
